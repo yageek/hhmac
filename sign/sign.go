@@ -46,7 +46,7 @@ type HashFunc func() hash.Hash
 type AuthorizationParameters struct {
 	Hash      string
 	Date      time.Time
-	PublicKey []byte
+	PublicKey string
 }
 
 // NewAuthorizationParametersFromString returns new parameter from string
@@ -57,21 +57,47 @@ func NewAuthorizationParametersFromString(str string) (*AuthorizationParameters,
 		return nil, ErrNonHMACScheme
 	}
 
-	// parametersRaw := strings.TrimSpace(authorization[len(AuthorizationHeader)+1:])
-	// parameters := strings.Split(parametersRaw, ",")
+	parametersRaw := authorization[len(AuthorizationHeaderScheme)+1:]
+	parameters := strings.Split(parametersRaw, ",")
 
-	return nil, nil
+	paramsMap := map[string]string{}
+
+	for _, param := range parameters {
+		param := strings.TrimSpace(param)
+		k, v := keyValueFromString(param)
+		paramsMap[k] = v
+	}
+
+	signParam, signCondition := paramsMap[AuthorizationHeaderHash]
+	dateParam, dateCondition := paramsMap[AuthorizationHeaderTimestamp]
+	keyParam, keyCondition := paramsMap[AuthorizationHeaderPublicKey]
+
+	if !signCondition || !dateCondition || !keyCondition {
+		return nil, ErrAuthorizationParameterInvalid
+	}
+
+	date, err := time.Parse(TimeFormat, dateParam)
+
+	if err != nil {
+		return nil, ErrAuthorizationParameterInvalid
+	}
+
+	authorizationParams := &AuthorizationParameters{
+		Hash:      signParam,
+		Date:      date,
+		PublicKey: keyParam,
+	}
+	return authorizationParams, nil
 
 }
 
-func parameterFromKeyString(str, key string) string {
-	var v, k string
-	_, err := fmt.Sscanf(str, "%s=%s", &k, &v)
-
-	if err != nil || k != key {
-		return ""
+func keyValueFromString(str string) (string, string) {
+	n := strings.Index(str, "=")
+	if n < 0 {
+		return "", ""
 	}
-	return v
+
+	return str[0:n], str[n+1:]
 }
 
 // Valid tells whether parameters are valid or not.
@@ -79,6 +105,8 @@ func (p *AuthorizationParameters) Valid() bool {
 	return p.Hash != "" && len(p.PublicKey) > 0
 }
 
+// ReadParameters reads the parameters from
+// an HTTP request.
 func ReadParameters(r *http.Request) (*AuthorizationParameters, error) {
 
 	authorization := r.Header.Get(AuthorizationHeader)
@@ -87,7 +115,7 @@ func ReadParameters(r *http.Request) (*AuthorizationParameters, error) {
 		return nil, ErrMissingAuthorizationHeader
 	}
 
-	return nil, nil
+	return NewAuthorizationParametersFromString(authorization)
 }
 
 // Hash returns the hash of

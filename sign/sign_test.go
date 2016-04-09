@@ -68,9 +68,9 @@ func TestParameterKey(t *testing.T) {
 
 	str1 := "key=value"
 
-	str := parameterFromKeyString(str1, "key")
+	key, value := keyValueFromString(str1)
 
-	if str != "value" {
-		t.Error("Unexpected key")
+	if key != "key" && value != "value" {
+		t.Error("Unexpected key value")
 	}
 }

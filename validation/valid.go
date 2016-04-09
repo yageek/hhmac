@@ -1,10 +1,17 @@
 package validation
 
 import (
+	"crypto/hmac"
+	"errors"
 	"fmt"
 	"github.com/yageek/hhmac/sign"
 	"net/http"
 	"time"
+)
+
+var (
+	ErrHashInvalid  = errors.New("Invalid Hash")
+	ErrTokenExpires = errors.New("Token expires")
 )
 
 // SecretProvider helps to retrieve
@@ -28,6 +35,35 @@ func NewValidator(last time.Duration, provider SecretProvider, fn sign.HashFunc)
 
 // ValidateRequest validate the requests
 func (v *Validator) ValidateRequest(r *http.Request) error {
+
+	params, err := sign.ReadParameters(r)
+
+	if err != nil {
+		return err
+	}
+
+	publicKey := params.PublicKey
+	secret, err := v.secretProvider.GetSecret(publicKey)
+
+	if err != nil {
+		return err
+	}
+
+	date := params.Date
+	expectedSign := params.Hash
+
+	sign := sign.Hash(r, date, []byte(publicKey), secret, v.hash)
+
+	if !hmac.Equal([]byte(expectedSign), sign) {
+		return ErrHashInvalid
+	}
+
+	// Valid time
+	now := time.Now().UTC()
+
+	if now.Sub(date).Seconds() > v.tokenValidTime.Seconds() {
+		return ErrTokenExpires
+	}
 
 	return nil
 }

@@ -18,7 +18,7 @@ func (m *MockProvider) GetScopes(identifier string) ([]string, error) {
 	return []string{}, nil
 }
 
-func TestHash(t *testing.T) {
+func TestHashUnhash(t *testing.T) {
 	r, _ := http.NewRequest("GET", "https://example.com/test/path?obj=1", nil)
 	// 20091110230000
 	date := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
@@ -33,4 +33,11 @@ func TestHash(t *testing.T) {
 		t.Error("Should not fail")
 		t.Fail()
 	}
+
+	err = v.ValidateRequest(r)
+	if err == nil {
+		t.Error("Should failed")
+
+	}
+
 }
