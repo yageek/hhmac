@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/hmac"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -15,7 +16,7 @@ func TestNonEmpty(t *testing.T) {
 
 	if len(final) != 2 {
 		t.Error("Length of final should be 2")
-		t.Fail()
+		t.FailNow()
 	}
 
 	for _, elem := range final {
@@ -72,5 +73,22 @@ func TestParameterKey(t *testing.T) {
 
 	if key != "key" && value != "value" {
 		t.Error("Unexpected key value")
+	}
+}
+
+func TestAuthorizationParameters(t *testing.T) {
+	str := "HHMAC hash=123456, time=1460277361, key=32"
+
+	params, err := NewAuthorizationParametersFromString(str)
+
+	if err != nil {
+		t.Error("Should not failed to parse parameters:", err)
+		t.FailNow()
+	}
+
+	f, _ := time.Parse(TimeFormat, "55")
+	fmt.Println("TEst:", f)
+	if params.Hash != "123456" && params.PublicKey != "32" && params.Date.Second() != f.Second() {
+		t.Error("Params should match")
 	}
 }

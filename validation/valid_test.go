@@ -25,19 +25,19 @@ func TestHashUnhash(t *testing.T) {
 
 	v := NewValidator(30*time.Second, 60*time.Second, &MockProvider{}, crypto.SHA256.New)
 
-	/*	v.HashRequest(r, date, public, "whatever")
+	v.HashRequest(r, date, public, "whatever")
 
-		if err := v.ValidateRequest(r); err != nil {
-			t.Error("Should not failed:", err)
-		}
+	if err := v.ValidateRequest(r); err != nil {
+		t.Error("Should not failed:", err)
+	}
 
-		v.HashRequest(r, date.Add(29*time.Second), public, "whatever")
+	v.HashRequest(r, date.Add(29*time.Second), public, "whatever")
 
-		if err := v.ValidateRequest(r); err != nil {
-			t.Error("Should not failed:", err)
+	if err := v.ValidateRequest(r); err != nil {
+		t.Error("Should not failed:", err)
 
-		}
-	*/
+	}
+
 	v.HashRequest(r, date.Add(31*time.Second), public, "whatever")
 
 	if err := v.ValidateRequest(r); err == nil {
@@ -45,16 +45,16 @@ func TestHashUnhash(t *testing.T) {
 
 	}
 
-	/*	v.HashRequest(r, date.Add(59*time.Second), public, "whatever")
+	v.HashRequest(r, date.Add(59*time.Second), public, "whatever")
 
-		if err := v.ValidateRequest(r); err != nil {
-			t.Error("Should not failed:", err)
+	if err := v.ValidateRequest(r); err != nil {
+		t.Error("Should not failed:", err)
 
-		}
-			v.HashRequest(r, date.Add(61*time.Second), public, "whatever")
+	}
+	v.HashRequest(r, date.Add(61*time.Second), public, "whatever")
 
-			if err := v.ValidateRequest(r); err == nil {
-				t.Error("Should failed")
-			}
-	*/
+	if err := v.ValidateRequest(r); err == nil {
+		t.Error("Should failed")
+	}
+
 }

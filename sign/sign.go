@@ -79,6 +79,7 @@ func NewAuthorizationParametersFromString(str string) (*AuthorizationParameters,
 	date, err := time.Parse(TimeFormat, dateParam)
 
 	if err != nil {
+		fmt.Println("Err:", err)
 		return nil, ErrAuthorizationParameterInvalid
 	}
 

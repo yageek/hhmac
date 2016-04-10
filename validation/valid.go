@@ -61,11 +61,10 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 
 	// Valid time
 	now := time.Now()
-	max := now.Add(v.tokenMaxTime).Second()
-	min := now.Add(-v.tokenMinTime).Second()
-	hashTime := date.Second()
+	max := now.Add(v.tokenMaxTime)
+	min := now.Add(-v.tokenMinTime)
 
-	if hashTime < min || hashTime > max {
+	if date.Sub(min) < 0 || max.Sub(date) < 0 {
 		return ErrTokenExpires
 	}
 
