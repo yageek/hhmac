@@ -160,6 +160,8 @@ func (v *Validator) Auth(h http.Handler, scopes []string) http.Handler {
 			http.Error(rw, "Authorizazion header invalid", http.StatusBadRequest)
 		case nil:
 			h.ServeHTTP(rw, r)
+		default:
+			http.Error(rw, "Unexpected error", http.StatusInternalServerError)
 		}
 	})
 }
