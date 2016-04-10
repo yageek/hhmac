@@ -16,6 +16,10 @@ var (
 	// ErrTokenExpires is returned when token time
 	// is considerd invalid.
 	ErrTokenExpires = errors.New("Token expires")
+	// ErrSecretNotFound tells that no secret has been found.
+	ErrSecretNotFound = errors.New("Secret not found")
+	// ErrInvalidScopes tells the user has no access
+	ErrInvalidScopes = errors.New("No valid scopes found")
 )
 
 // SecretProvider helps to retrieve
@@ -38,7 +42,7 @@ func NewValidator(validTime time.Duration, provider SecretProvider, fn sign.Hash
 }
 
 // ValidateRequest validate the requests
-func (v *Validator) ValidateRequest(r *http.Request) error {
+func (v *Validator) ValidateRequest(r *http.Request, scopes []string) error {
 
 	params, err := sign.ReadParameters(r)
 
@@ -61,6 +65,16 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 	if sign != expectedSign {
 		return ErrHashInvalid
 	}
+
+	// Valid scopes
+	if len(scopes) > 0 {
+		err := v.validScopes(publicKey, scopes)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	// Valid time
 	now := time.Now()
 	delta := now.Sub(date).Seconds()
@@ -70,6 +84,30 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 		return ErrTokenExpires
 	}
 
+	return nil
+}
+
+func (v *Validator) validScopes(identifier string, scopes []string) error {
+	// Valid scopes
+	userScopes, err := v.secretProvider.GetScopes(identifier)
+	if err != nil {
+		return err
+	}
+
+	for _, wantedScope := range scopes {
+		validCurrentScope := false
+
+		for _, userScope := range userScopes {
+			if userScope == wantedScope {
+				validCurrentScope = true
+				break
+			}
+		}
+
+		if !validCurrentScope {
+			return ErrInvalidScopes
+		}
+	}
 	return nil
 }
 
