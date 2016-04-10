@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"crypto/hmac"
 	"errors"
 	"fmt"
 	"github.com/yageek/hhmac/sign"
@@ -10,14 +9,18 @@ import (
 )
 
 var (
-	ErrHashInvalid  = errors.New("Invalid Hash")
+	// ErrHashInvalid is returned when hash is
+	// considered invalid.
+	ErrHashInvalid = errors.New("Invalid Hash")
+	// ErrTokenExpires is returned when token time
+	// is considerd invalid.
 	ErrTokenExpires = errors.New("Token expires")
 )
 
 // SecretProvider helps to retrieve
 // informations about the user.
 type SecretProvider interface {
-	GetSecret(identifier string) ([]byte, error)
+	GetSecret(identifier string) (string, error)
 	GetScopes(identifier string) ([]string, error)
 }
 
@@ -53,18 +56,17 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 	date := params.Date
 	expectedSign := params.Hash
 
-	sign := sign.Hash(r, date, []byte(publicKey), secret, v.hash)
+	sign := sign.Hash(r, date, publicKey, secret, v.hash)
 
-	if !hmac.Equal([]byte(expectedSign), sign) {
+	if sign != expectedSign {
 		return ErrHashInvalid
 	}
 
 	// Valid time
 	now := time.Now()
-	max := now.Add(v.tokenMaxTime)
-	min := now.Add(-v.tokenMinTime)
+	min := now.Add(v.tokenMinTime)
 
-	if date.Sub(min) < 0 || max.Sub(date) < 0 {
+	if date.Sub(min) > 0 {
 		return ErrTokenExpires
 	}
 
@@ -75,7 +77,7 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 // the given parameters.
 // Ex: Authorization: FIRE-TOKEN apikey="0PN5J17HBGZHT7JJ3X82", hash="frJIUN8DYpKDtOLCwo//yllqDzg="
 // See http://stackoverflow.com/questions/7802116/custom-http-authorization-header
-func (v *Validator) HashRequest(r *http.Request, date time.Time, public []byte, identifier string) error {
+func (v *Validator) HashRequest(r *http.Request, date time.Time, public string, identifier string) error {
 
 	secret, err := v.secretProvider.GetSecret(identifier)
 
@@ -83,7 +85,7 @@ func (v *Validator) HashRequest(r *http.Request, date time.Time, public []byte, 
 		return err
 	}
 
-	timeStampParam := fmt.Sprintf("%s=%s", sign.AuthorizationHeaderTimestamp, date.Format(sign.TimeFormat))
+	timeStampParam := fmt.Sprintf("%s=%d", sign.AuthorizationHeaderTimestamp, date.UnixNano())
 	publicKeyParam := fmt.Sprintf("%s=%s", sign.AuthorizationHeaderPublicKey, string(public))
 
 	hash := sign.Hash(r, date, public, secret, v.hash)

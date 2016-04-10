@@ -2,9 +2,6 @@ package sign
 
 import (
 	"crypto"
-	"crypto/hmac"
-	"encoding/hex"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -53,14 +50,14 @@ func TestHash(t *testing.T) {
 
 	// 20091110230000
 	date := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-	secret := []byte("MYSECRET")
-	public := []byte("42")
+	secret := "MYSECRET"
+	public := "42"
 
 	hash := Hash(r, date, public, secret, crypto.SHA256.New)
 
-	expected, _ := hex.DecodeString("8618c5198d8ef93206a7b1724feaa83743c858153cac2a1edc987321a7fb5c7f")
+	expected := "7175a8fbdbadb54e8a20d4187f8b62a71d0d9db9c43e6b45925eadeecfb9d99d"
 
-	if !hmac.Equal(expected, hash) {
+	if hash != expected {
 		t.Error("Unexpected hash:", hash)
 	}
 }
@@ -86,8 +83,7 @@ func TestAuthorizationParameters(t *testing.T) {
 		t.FailNow()
 	}
 
-	f, _ := time.Parse(TimeFormat, "55")
-	fmt.Println("TEst:", f)
+	f := time.Unix(0, 55)
 	if params.Hash != "123456" && params.PublicKey != "32" && params.Date.Second() != f.Second() {
 		t.Error("Params should match")
 	}

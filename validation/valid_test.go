@@ -10,8 +10,8 @@ import (
 type MockProvider struct {
 }
 
-func (m *MockProvider) GetSecret(identifier string) ([]byte, error) {
-	return []byte("MYSECRET"), nil
+func (m *MockProvider) GetSecret(identifier string) (string, error) {
+	return "MYSECRET", nil
 }
 
 func (m *MockProvider) GetScopes(identifier string) ([]string, error) {
@@ -21,7 +21,7 @@ func (m *MockProvider) GetScopes(identifier string) ([]string, error) {
 func TestHashUnhash(t *testing.T) {
 	r, _ := http.NewRequest("GET", "https://example.com/test/path?obj=1", nil)
 	date := time.Now().UTC()
-	public := []byte("42")
+	public := "42"
 
 	v := NewValidator(30*time.Second, 60*time.Second, &MockProvider{}, crypto.SHA256.New)
 

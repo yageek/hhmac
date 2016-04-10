@@ -2,11 +2,13 @@ package sign
 
 import (
 	"crypto/hmac"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -25,9 +27,6 @@ const (
 	// AuthorizationHeaderPublicKey is the authentication
 	// parameter for the public key.
 	AuthorizationHeaderPublicKey = "key"
-
-	// TimeFormat represents the format of timestamp
-	TimeFormat = "20060102150405"
 )
 
 var (
@@ -76,16 +75,15 @@ func NewAuthorizationParametersFromString(str string) (*AuthorizationParameters,
 		return nil, ErrAuthorizationParameterInvalid
 	}
 
-	date, err := time.Parse(TimeFormat, dateParam)
+	timestamp, err := strconv.ParseInt(dateParam, 10, 64)
 
 	if err != nil {
-		fmt.Println("Err:", err)
 		return nil, ErrAuthorizationParameterInvalid
 	}
 
 	authorizationParams := &AuthorizationParameters{
 		Hash:      signParam,
-		Date:      date,
+		Date:      time.Unix(0, timestamp),
 		PublicKey: keyParam,
 	}
 	return authorizationParams, nil
@@ -121,18 +119,18 @@ func ReadParameters(r *http.Request) (*AuthorizationParameters, error) {
 
 // Hash returns the hash of
 // an HTTP request with the given key.
-func Hash(r *http.Request, date time.Time, public, secret []byte, fn HashFunc) []byte {
+func Hash(r *http.Request, date time.Time, public, secret string, fn HashFunc) string {
 
 	queryCharacteristic := QueryCharacteristic(r)
-	dateString := date.UTC().Format(TimeFormat)
+	dateString := strconv.FormatInt(date.UTC().UnixNano(), 10)
 	publicKey := string(public)
 
 	args := []string{queryCharacteristic, dateString, publicKey}
 	signatureRaw := strings.Join(args, "_")
 
-	mac := hmac.New(fn, secret)
+	mac := hmac.New(fn, []byte(secret))
 	mac.Write([]byte(signatureRaw))
-	return mac.Sum(nil)
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 // QueryCharacteristic returns the
