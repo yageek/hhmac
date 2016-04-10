@@ -123,11 +123,11 @@ func (v *Validator) HashRequest(r *http.Request, date time.Time, public string, 
 		return err
 	}
 
-	timeStampParam := fmt.Sprintf("%s=%d", sign.AuthorizationHeaderTimestamp, date.UnixNano())
-	publicKeyParam := fmt.Sprintf("%s=%s", sign.AuthorizationHeaderPublicKey, string(public))
+	timeStampParam := fmt.Sprintf("%s=\"%d\"", sign.AuthorizationHeaderTimestamp, date.UnixNano())
+	publicKeyParam := fmt.Sprintf("%s=\"%s\"", sign.AuthorizationHeaderPublicKey, string(public))
 
 	hash := sign.Hash(r, date, public, secret, v.hash)
-	signatureParam := fmt.Sprintf("%s=%s", sign.AuthorizationHeaderHash, string(hash))
+	signatureParam := fmt.Sprintf("%s=\"%s\"", sign.AuthorizationHeaderHash, string(hash))
 
 	authorizationHeader := fmt.Sprintf("%s %s, %s, %s", sign.AuthorizationHeaderScheme, timeStampParam, publicKeyParam, signatureParam)
 

@@ -96,7 +96,7 @@ func keyValueFromString(str string) (string, string) {
 		return "", ""
 	}
 
-	return str[0:n], str[n+1:]
+	return str[0:n], str[n+2 : len(str)-1]
 }
 
 // Valid tells whether parameters are valid or not.
