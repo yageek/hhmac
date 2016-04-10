@@ -5,4 +5,4 @@
 
 # HMAC HTTP Authentication with Go
 
-Simple HMAC authentication for Go.
+Simple HMAC authentication for Go. This has been inspired by  http://stackoverflow.com/questions/7802116/custom-http-authorization-header and http://www.thebuzzmedia.com/designing-a-secure-rest-api-without-oauth-authentication/.
