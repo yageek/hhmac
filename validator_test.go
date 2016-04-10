@@ -1,4 +1,4 @@
-package validation
+package hhmac
 
 import (
 	"crypto"

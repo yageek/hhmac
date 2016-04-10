@@ -1,4 +1,4 @@
-package validation
+package hhmac
 
 import (
 	"errors"
@@ -134,4 +134,32 @@ func (v *Validator) HashRequest(r *http.Request, date time.Time, public string, 
 	r.Header.Set(sign.AuthorizationHeader, authorizationHeader)
 
 	return nil
+}
+
+// Auth wraps the current handler as authenticated with the provided scopes
+func (v *Validator) Auth(h http.Handler, scopes []string) http.Handler {
+
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
+		err := v.ValidateRequest(r, scopes)
+
+		switch err {
+		case ErrHashInvalid:
+			fallthrough
+		case ErrInvalidScopes:
+			fallthrough
+		case ErrTokenExpires:
+			http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+		case sign.ErrAuthorizationParameterInvalid:
+			fallthrough
+		case sign.ErrAuthorizationParameterNotFound:
+			fallthrough
+		case sign.ErrMissingAuthorizationHeader:
+			fallthrough
+		case sign.ErrNonHMACScheme:
+			http.Error(rw, "Authorizazion header invalid", http.StatusBadRequest)
+		case nil:
+			h.ServeHTTP(rw, r)
+		}
+	})
 }
