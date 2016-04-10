@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/yageek/hhmac/sign"
+
 	"net/http"
 	"time"
 )
@@ -26,15 +27,14 @@ type SecretProvider interface {
 
 // Validator validates request
 type Validator struct {
-	tokenMinTime   time.Duration
-	tokenMaxTime   time.Duration
+	tokenTime      time.Duration
 	secretProvider SecretProvider
 	hash           sign.HashFunc
 }
 
 // NewValidator returns a new validator
-func NewValidator(min, max time.Duration, provider SecretProvider, fn sign.HashFunc) *Validator {
-	return &Validator{min, max, provider, fn}
+func NewValidator(validTime time.Duration, provider SecretProvider, fn sign.HashFunc) *Validator {
+	return &Validator{validTime, provider, fn}
 }
 
 // ValidateRequest validate the requests
@@ -61,12 +61,12 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 	if sign != expectedSign {
 		return ErrHashInvalid
 	}
-
 	// Valid time
 	now := time.Now()
-	min := now.Add(v.tokenMinTime)
+	delta := now.Sub(date).Seconds()
+	acceptedDelta := v.tokenTime.Seconds()
 
-	if date.Sub(min) > 0 {
+	if delta > acceptedDelta || delta < -acceptedDelta {
 		return ErrTokenExpires
 	}
 

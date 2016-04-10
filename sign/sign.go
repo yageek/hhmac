@@ -122,7 +122,7 @@ func ReadParameters(r *http.Request) (*AuthorizationParameters, error) {
 func Hash(r *http.Request, date time.Time, public, secret string, fn HashFunc) string {
 
 	queryCharacteristic := QueryCharacteristic(r)
-	dateString := strconv.FormatInt(date.UTC().UnixNano(), 10)
+	dateString := strconv.FormatInt(date.UnixNano(), 10)
 	publicKey := string(public)
 
 	args := []string{queryCharacteristic, dateString, publicKey}

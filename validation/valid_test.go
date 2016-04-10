@@ -20,10 +20,10 @@ func (m *MockProvider) GetScopes(identifier string) ([]string, error) {
 
 func TestHashUnhash(t *testing.T) {
 	r, _ := http.NewRequest("GET", "https://example.com/test/path?obj=1", nil)
-	date := time.Now().UTC()
+	date := time.Now()
 	public := "42"
 
-	v := NewValidator(30*time.Second, 60*time.Second, &MockProvider{}, crypto.SHA256.New)
+	v := NewValidator(30*time.Second, &MockProvider{}, crypto.SHA256.New)
 
 	v.HashRequest(r, date, public, "whatever")
 
@@ -45,7 +45,7 @@ func TestHashUnhash(t *testing.T) {
 
 	}
 
-	v.HashRequest(r, date.Add(59*time.Second), public, "whatever")
+	v.HashRequest(r, date.Add(20*time.Second), public, "whatever")
 
 	if err := v.ValidateRequest(r); err != nil {
 		t.Error("Should not failed:", err)
