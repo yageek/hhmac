@@ -23,14 +23,15 @@ type SecretProvider interface {
 
 // Validator validates request
 type Validator struct {
-	tokenValidTime time.Duration
+	tokenMinTime   time.Duration
+	tokenMaxTime   time.Duration
 	secretProvider SecretProvider
 	hash           sign.HashFunc
 }
 
 // NewValidator returns a new validator
-func NewValidator(last time.Duration, provider SecretProvider, fn sign.HashFunc) *Validator {
-	return &Validator{last, provider, fn}
+func NewValidator(min, max time.Duration, provider SecretProvider, fn sign.HashFunc) *Validator {
+	return &Validator{min, max, provider, fn}
 }
 
 // ValidateRequest validate the requests
@@ -59,9 +60,12 @@ func (v *Validator) ValidateRequest(r *http.Request) error {
 	}
 
 	// Valid time
-	now := time.Now().UTC()
+	now := time.Now()
+	max := now.Add(v.tokenMaxTime).Second()
+	min := now.Add(-v.tokenMinTime).Second()
+	hashTime := date.Second()
 
-	if now.Sub(date).Seconds() > v.tokenValidTime.Seconds() {
+	if hashTime < min || hashTime > max {
 		return ErrTokenExpires
 	}
 

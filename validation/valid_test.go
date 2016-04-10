@@ -20,24 +20,41 @@ func (m *MockProvider) GetScopes(identifier string) ([]string, error) {
 
 func TestHashUnhash(t *testing.T) {
 	r, _ := http.NewRequest("GET", "https://example.com/test/path?obj=1", nil)
-	// 20091110230000
-	date := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	date := time.Now().UTC()
 	public := []byte("42")
 
-	//8618c5198d8ef93206a7b1724feaa83743c858153cac2a1edc987321a7fb5c7f
+	v := NewValidator(30*time.Second, 60*time.Second, &MockProvider{}, crypto.SHA256.New)
 
-	v := NewValidator(time.Duration(3600), &MockProvider{}, crypto.SHA256.New)
+	/*	v.HashRequest(r, date, public, "whatever")
 
-	err := v.HashRequest(r, date, public, "whatever")
-	if err != nil {
-		t.Error("Should not fail")
-		t.Fail()
-	}
+		if err := v.ValidateRequest(r); err != nil {
+			t.Error("Should not failed:", err)
+		}
 
-	err = v.ValidateRequest(r)
-	if err == nil {
+		v.HashRequest(r, date.Add(29*time.Second), public, "whatever")
+
+		if err := v.ValidateRequest(r); err != nil {
+			t.Error("Should not failed:", err)
+
+		}
+	*/
+	v.HashRequest(r, date.Add(31*time.Second), public, "whatever")
+
+	if err := v.ValidateRequest(r); err == nil {
 		t.Error("Should failed")
 
 	}
 
+	/*	v.HashRequest(r, date.Add(59*time.Second), public, "whatever")
+
+		if err := v.ValidateRequest(r); err != nil {
+			t.Error("Should not failed:", err)
+
+		}
+			v.HashRequest(r, date.Add(61*time.Second), public, "whatever")
+
+			if err := v.ValidateRequest(r); err == nil {
+				t.Error("Should failed")
+			}
+	*/
 }
